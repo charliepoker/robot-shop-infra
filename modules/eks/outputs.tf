@@ -25,7 +25,7 @@ output "cluster_security_group_id" {
 }
 
 output "node_security_group_id" {
-  description = "Security group attached to worker nodes — used in RDS SG ingress rules (Task 7)"
+  description = "Security group attached to worker nodes — used in RDS SG ingress rules "
   value       = module.eks.node_security_group_id
 }
 

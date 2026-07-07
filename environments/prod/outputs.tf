@@ -61,15 +61,15 @@ output "karpenter_queue_name" {
   value = module.karpenter.queue_name
 }
 
-# ── Task 7 — RDS ─────────────────────────────────────────────────────────────
+# ────────────── Task 7 — RDS ────────────────────────────────────────────────────
 
-# output "db_endpoint" {
-#   value = module.rds.db_endpoint
-# }
+output "db_endpoint" {
+  value = module.rds.db_endpoint
+}
 
-# output "db_port" {
-#   value = module.rds.db_port
-# }
+output "db_port" {
+  value = module.rds.db_port
+}
 
 # ── Task 8 — ECR + ACM ───────────────────────────────────────────────────────
 

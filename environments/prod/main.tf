@@ -70,20 +70,21 @@ module "karpenter" {
   oidc_provider_arn = module.eks.oidc_provider_arn
 }
 
-# ── Task 7 — RDS MySQL ───────────────────────────────────────────────────────
-# Added in Task 7
+# ────────────── RDS MySQL ──────────────────────────────────────────────────────
 
-# module "rds" {
-#   source = "../../modules/rds-mysql"
-#
-#   name_prefix        = var.name_prefix
-#   environment        = var.environment
-#   vpc_id             = module.vpc.vpc_id
-#   db_subnet_ids      = module.vpc.intra_subnet_ids
-#   kms_key_arn        = module.kms.rds_key_arn
-#   db_name            = var.db_name
-#   db_username        = var.db_username
-# }
+
+module "rds" {
+  source = "../../modules/rds-mysql"
+
+  name_prefix            = var.name_prefix
+  environment            = var.environment
+  vpc_id                 = module.vpc.vpc_id
+  db_subnet_ids          = module.vpc.intra_subnet_ids
+  node_security_group_id = module.eks.node_security_group_id
+  kms_key_arn            = module.kms.rds_key_arn
+  db_name                = var.db_name
+  db_username            = var.db_username
+}
 
 # ── Task 8 — ECR ─────────────────────────────────────────────────────────────
 # Added in Task 8

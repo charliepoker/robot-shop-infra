@@ -62,21 +62,20 @@ variable "node_desired_size" {
   default = 2
 }
 
-# ── RDS ───────────────────────────────────────────────────────────────────────
-# Uncommented in Task 7 (rds-mysql module)
+# ────────── RDS ───────────────────────────────────────────────────────────────────
 
-# variable "db_name" {
-#   description = "Name of the MySQL database to create inside the instance"
-#   type        = string
-#   default     = "robotshop"
-# }
+variable "db_name" {
+  description = "Name of the MySQL database to create inside the instance"
+  type        = string
+  default     = "robotshop"
+}
 
-# variable "db_username" {
-#   description = "Master username for the RDS instance"
-#   type        = string
-#   default     = "admin"
-#   sensitive   = true
-# }
+variable "db_username" {
+  description = "Master username for the RDS instance"
+  type        = string
+  default     = "admin"
+  sensitive   = true
+}
 
 # ── ECR ───────────────────────────────────────────────────────────────────────
 # Uncommented in Task 8 (ecr module)
