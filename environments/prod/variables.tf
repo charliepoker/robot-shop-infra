@@ -35,34 +35,32 @@ variable "vpc_cidr" {
 }
 
 # ── EKS ───────────────────────────────────────────────────────────────────────
-# Uncommented in Task 5 (eks module)
+variable "cluster_version" {
+  description = "Kubernetes version for the EKS cluster"
+  type        = string
+  default     = "1.35"
+}
 
-# variable "cluster_version" {
-#   description = "Kubernetes version for the EKS cluster"
-#   type        = string
-#   default     = "1.35"
-# }
+variable "node_instance_type" {
+  description = "EC2 instance type for the baseline managed node group"
+  type        = string
+  default     = "t3.medium"
+}
 
-# variable "node_instance_type" {
-#   description = "EC2 instance type for the baseline managed node group"
-#   type        = string
-#   default     = "t3.medium"
-# }
+variable "node_min_size" {
+  type    = number
+  default = 2
+}
 
-# variable "node_min_size" {
-#   type    = number
-#   default = 2
-# }
+variable "node_max_size" {
+  type    = number
+  default = 5
+}
 
-# variable "node_max_size" {
-#   type    = number
-#   default = 5
-# }
-
-# variable "node_desired_size" {
-#   type    = number
-#   default = 2
-# }
+variable "node_desired_size" {
+  type    = number
+  default = 2
+}
 
 # ── RDS ───────────────────────────────────────────────────────────────────────
 # Uncommented in Task 7 (rds-mysql module)

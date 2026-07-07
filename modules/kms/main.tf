@@ -1,51 +1,118 @@
 
-# -----------------------------------------------------------------------------
-# 
-#
-# Creates three Customer-Managed Keys (CMKs):
-#
-#   rds  — encrypts the RDS MySQL instance and its automated snapshots
-#   ebs  — encrypts EKS node root volumes and any Kubernetes PersistentVolumes
-#   s3   — encrypts S3 buckets (Velero backups, and optionally the state bucket)
-#
-# Why CMKs instead of AWS-managed keys?
-#   AWS-managed keys are free but you have no control over the key policy,
-#   no ability to restrict which IAM principals can decrypt, and CloudTrail
-#   doesn't show per-operation detail. CMKs give you all three — and
-#   annual key rotation is a single argument at no extra cost.
-#
-# Outputs from this module are consumed by:
-#   modules/rds-mysql   → rds_key_arn  (storage_encrypted + kms_key_id)
-#   modules/eks         → ebs_key_arn  (node group block device encryption)
-#   Phase 2 Velero S3   → s3_key_arn   (bucket server-side encryption)
-# -----------------------------------------------------------------------------
+data "aws_caller_identity" "current" {}
+data "aws_partition" "current" {}
 
-resource "aws_kms_key" "rds" {
-  description             = "CMK for RDS MySQL encryption — ${var.name_prefix}"
-  deletion_window_in_days = var.deletion_window_in_days
+# ── EBS Key Policy ────────────────────────────────────────────────────────────
+# Must grant the Auto Scaling service-linked role both key USE and CreateGrant
+# permissions before any node group with encrypted volumes can be created.
 
-  # AWS rotates the backing key material annually at no cost.
-  # Your key ID and ARN never change — nothing needs to be re-encrypted.
-  enable_key_rotation = true
+data "aws_iam_policy_document" "ebs" {
+  # Statement 1: Allow the account root to administer the key
+  # (required — without this, no IAM principal can manage the key at all)
+  statement {
+    sid    = "EnableRootAccess"
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    actions   = ["kms:*"]
+    resources = ["*"]
+  }
 
-  tags = {
-    Name        = "${var.name_prefix}-rds"
-    Environment = var.environment
+  # Statement 2: Allow EC2 Auto Scaling to USE the key for EBS encryption
+  # AWSServiceRoleForAutoScaling is the role ASGs use when launching instances
+  statement {
+    sid    = "AllowAutoScalingServiceLinkedRole"
+    effect = "Allow"
+    principals {
+      type = "AWS"
+      identifiers = [
+        "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"
+      ]
+    }
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey",
+    ]
+    resources = ["*"]
+  }
+
+  # Statement 3: Allow Auto Scaling to CreateGrant (CRITICAL)
+  # EC2 creates grants so the hypervisor can decrypt volume data keys at
+  # runtime without a live IAM call on every disk I/O. Without this statement
+  # the node launches but immediately fails because the hypervisor cannot
+  # access the key to decrypt the root volume's data key.
+  # kms:GrantIsForAWSResource ensures grants can only be created for use
+  # by AWS services — it cannot be used to grant access to arbitrary principals.
+  statement {
+    sid    = "AllowAutoScalingCreateGrant"
+    effect = "Allow"
+    principals {
+      type = "AWS"
+      identifiers = [
+        "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"
+      ]
+    }
+    actions = [
+      "kms:CreateGrant",
+      "kms:ListGrants",
+      "kms:RevokeGrant",
+    ]
+    resources = ["*"]
+    condition {
+      test     = "Bool"
+      variable = "kms:GrantIsForAWSResource"
+      values   = ["true"]
+    }
   }
 }
 
-resource "aws_kms_alias" "rds" {
-  # Aliases make it easy to identify keys in the console and CLI
-  name          = "alias/${var.name_prefix}-rds"
-  target_key_id = aws_kms_key.rds.key_id
+# ── RDS Key Policy ────────────────────────────────────────────────────────────
+# RDS manages its own grants to access CMKs. The default key policy (root
+# account access) is sufficient — RDS calls CreateGrant itself as part of
+# the instance creation process and is covered by the root statement.
+
+data "aws_iam_policy_document" "rds" {
+  statement {
+    sid    = "EnableRootAccess"
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    actions   = ["kms:*"]
+    resources = ["*"]
+  }
 }
 
-# -----------------------------------------------------------------------------
+# ── S3 Key Policy ─────────────────────────────────────────────────────────────
+# S3 access is via IAM roles (Velero, Terraform) which are covered by the
+# default root-account policy. No service-linked role involved.
+
+data "aws_iam_policy_document" "s3" {
+  statement {
+    sid    = "EnableRootAccess"
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    actions   = ["kms:*"]
+    resources = ["*"]
+  }
+}
+
+# ── KMS Keys ──────────────────────────────────────────────────────────────────
 
 resource "aws_kms_key" "ebs" {
-  description             = "CMK for EBS volumes — EKS node root disks and PersistentVolumes"
+  description             = "CMK for EKS node EBS volumes — ${var.name_prefix}"
   deletion_window_in_days = var.deletion_window_in_days
   enable_key_rotation     = true
+  policy                  = data.aws_iam_policy_document.ebs.json
 
   tags = {
     Name        = "${var.name_prefix}-ebs"
@@ -58,12 +125,28 @@ resource "aws_kms_alias" "ebs" {
   target_key_id = aws_kms_key.ebs.key_id
 }
 
-# -----------------------------------------------------------------------------
-
-resource "aws_kms_key" "s3" {
-  description             = "CMK for S3 buckets — Velero backups and Terraform state"
+resource "aws_kms_key" "rds" {
+  description             = "CMK for RDS MySQL — ${var.name_prefix}"
   deletion_window_in_days = var.deletion_window_in_days
   enable_key_rotation     = true
+  policy                  = data.aws_iam_policy_document.rds.json
+
+  tags = {
+    Name        = "${var.name_prefix}-rds"
+    Environment = var.environment
+  }
+}
+
+resource "aws_kms_alias" "rds" {
+  name          = "alias/${var.name_prefix}-rds"
+  target_key_id = aws_kms_key.rds.key_id
+}
+
+resource "aws_kms_key" "s3" {
+  description             = "CMK for S3 buckets — Velero and Terraform state"
+  deletion_window_in_days = var.deletion_window_in_days
+  enable_key_rotation     = true
+  policy                  = data.aws_iam_policy_document.s3.json
 
   tags = {
     Name        = "${var.name_prefix}-s3"

@@ -33,7 +33,6 @@ module "route53" {
 }
 
 # ──────────────VPC ────────────────────────────────────────────────────────────
-
 module "vpc" {
   source = "../../modules/vpc"
 
@@ -43,23 +42,21 @@ module "vpc" {
   cluster_name = var.name_prefix
 }
 
-# ── Task 5 — EKS ─────────────────────────────────────────────────────────────
-# Added in Task 5
+# ──────────── EKS ─────────────────────────────────────────────────────────────
+module "eks" {
+  source = "../../modules/eks"
 
-# module "eks" {
-#   source = "../../modules/eks"
-#
-#   name_prefix        = var.name_prefix
-#   environment        = var.environment
-#   cluster_version    = var.cluster_version
-#   vpc_id             = module.vpc.vpc_id
-#   private_subnet_ids = module.vpc.private_subnet_ids
-#   ebs_kms_key_arn    = module.kms.ebs_key_arn
-#   node_instance_type = var.node_instance_type
-#   node_min_size      = var.node_min_size
-#   node_max_size      = var.node_max_size
-#   node_desired_size  = var.node_desired_size
-# }
+  name_prefix        = var.name_prefix
+  environment        = var.environment
+  cluster_version    = var.cluster_version
+  vpc_id             = module.vpc.vpc_id
+  private_subnet_ids = module.vpc.private_subnet_ids
+  ebs_kms_key_arn    = module.kms.ebs_key_arn
+  node_instance_type = var.node_instance_type
+  node_min_size      = var.node_min_size
+  node_max_size      = var.node_max_size
+  node_desired_size  = var.node_desired_size
+}
 
 # ── Task 6 — Karpenter ───────────────────────────────────────────────────────
 # Added in Task 6
