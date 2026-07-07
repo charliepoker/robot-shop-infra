@@ -51,15 +51,15 @@ output "oidc_provider_arn" {
   value = module.eks.oidc_provider_arn
 }
 
-# ── Task 6 — Karpenter ───────────────────────────────────────────────────────
+# ────────────── Karpenter ──────────────────────────────────────────────────────
 
-# output "karpenter_role_arn" {
-#   value = module.karpenter.role_arn
-# }
+output "karpenter_role_arn" {
+  value = module.karpenter.role_arn
+}
 
-# output "karpenter_queue_name" {
-#   value = module.karpenter.queue_name
-# }
+output "karpenter_queue_name" {
+  value = module.karpenter.queue_name
+}
 
 # ── Task 7 — RDS ─────────────────────────────────────────────────────────────
 

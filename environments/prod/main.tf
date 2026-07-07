@@ -58,18 +58,17 @@ module "eks" {
   node_desired_size  = var.node_desired_size
 }
 
-# ── Task 6 — Karpenter ───────────────────────────────────────────────────────
-# Added in Task 6
+# ────────────── Karpenter ──────────────────────────────────────────────────────
 
-# module "karpenter" {
-#   source = "../../modules/karpenter"
-#
-#   name_prefix       = var.name_prefix
-#   environment       = var.environment
-#   cluster_name      = module.eks.cluster_name
-#   cluster_endpoint  = module.eks.cluster_endpoint
-#   oidc_provider_arn = module.eks.oidc_provider_arn
-# }
+module "karpenter" {
+  source = "../../modules/karpenter"
+
+  name_prefix       = var.name_prefix
+  environment       = var.environment
+  cluster_name      = module.eks.cluster_name
+  cluster_endpoint  = module.eks.cluster_endpoint
+  oidc_provider_arn = module.eks.oidc_provider_arn
+}
 
 # ── Task 7 — RDS MySQL ───────────────────────────────────────────────────────
 # Added in Task 7
