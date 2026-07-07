@@ -24,19 +24,19 @@ output "route53_zone_id" {
 }
 
 output "route53_name_servers" {
-  description = "Paste these four values into your domain registrar's nameserver settings"
+  description = "Route53 nameservers for the hosted zone"
   value       = module.route53.name_servers
 }
 
-# ── Task 4 — VPC ─────────────────────────────────────────────────────────────
+#────────────── VPC ───────────────────────────────────────────────────────────
 
-# output "vpc_id" {
-#   value = module.vpc.vpc_id
-# }
+output "vpc_id" {
+  value = module.vpc.vpc_id
+}
 
-# output "private_subnet_ids" {
-#   value = module.vpc.private_subnet_ids
-# }
+output "private_subnet_ids" {
+  value = module.vpc.private_subnet_ids
+}
 
 # ── Task 5 — EKS ─────────────────────────────────────────────────────────────
 

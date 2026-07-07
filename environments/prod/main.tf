@@ -32,17 +32,16 @@ module "route53" {
   environment = var.environment
 }
 
-# ── Task 4 — VPC ─────────────────────────────────────────────────────────────
-# Added in Task 4
+# ──────────────VPC ────────────────────────────────────────────────────────────
 
-# module "vpc" {
-#   source = "../../modules/vpc"
-#
-#   name_prefix  = var.name_prefix
-#   environment  = var.environment
-#   vpc_cidr     = var.vpc_cidr
-#   cluster_name = var.name_prefix
-# }
+module "vpc" {
+  source = "../../modules/vpc"
+
+  name_prefix  = var.name_prefix
+  environment  = var.environment
+  vpc_cidr     = var.vpc_cidr
+  cluster_name = var.name_prefix
+}
 
 # ── Task 5 — EKS ─────────────────────────────────────────────────────────────
 # Added in Task 5

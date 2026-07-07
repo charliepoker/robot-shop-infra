@@ -28,13 +28,11 @@ variable "domain_name" {
 }
 
 # ── Networking ────────────────────────────────────────────────────────────────
-# Uncommented in Task 4 (vpc module)
-
-# variable "vpc_cidr" {
-#   description = "CIDR block for the VPC"
-#   type        = string
-#   default     = "10.0.0.0/16"
-# }
+variable "vpc_cidr" {
+  description = "CIDR block for the VPC"
+  type        = string
+  default     = "10.0.0.0/16"
+}
 
 # ── EKS ───────────────────────────────────────────────────────────────────────
 # Uncommented in Task 5 (eks module)
