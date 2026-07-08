@@ -96,17 +96,15 @@ variable "ecr_repos" {
   ]
 }
 
-# ── GitHub OIDC ───────────────────────────────────────────────────────────────
-# Uncommented in Task 9 (github-oidc module)
+# ────────── GitHub OIDC ───────────────────────────────────────────────────────────────
+variable "github_org" {
+  description = "GitHub organisation or username that owns the robot-shop repo"
+  type        = string
+  default     = "charliepoker"
+}
 
-# variable "github_org" {
-#   description = "GitHub organisation or username that owns the robot-shop repo"
-#   type        = string
-#   default     = "charliepoker"
-# }
-
-# variable "github_repo" {
-#   description = "GitHub repository name for the application code"
-#   type        = string
-#   default     = "robot-shop"
-# }
+variable "github_repo" {
+  description = "GitHub repository name for the application code"
+  type        = string
+  default     = "robot-shop"
+}

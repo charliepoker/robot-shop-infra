@@ -61,7 +61,7 @@ output "karpenter_queue_name" {
   value = module.karpenter.queue_name
 }
 
-# ────────────── Task 7 — RDS ────────────────────────────────────────────────────
+# ─────────────────────── RDS ──────────────────────────────────────────────────
 
 output "db_endpoint" {
   value = module.rds.db_endpoint
@@ -71,7 +71,7 @@ output "db_port" {
   value = module.rds.db_port
 }
 
-# ────────────── Task 8 — ECR + ACM ───────────────────────────────────────────────
+# ─────────────────────── ECR + ACM ────────────────────────────────────────────
 
 output "ecr_repository_urls" {
   value = module.ecr.repository_urls
@@ -81,12 +81,11 @@ output "acm_certificate_arn" {
   value = module.acm.certificate_arn
 }
 
-# ── Task 9 — Secrets + OIDC ──────────────────────────────────────────────────
+# ─────────────── Secrets + OIDC ───────────────────────────────────────────────
+output "rds_secret_arn" {
+  value = module.secrets_manager.secret_arn
+}
 
-# output "rds_secret_arn" {
-#   value = module.secrets_manager.secret_arn
-# }
-
-# output "github_actions_role_arn" {
-#   value = module.github_oidc.role_arn
-# }
+output "github_actions_role_arn" {
+  value = module.github_oidc.role_arn
+}

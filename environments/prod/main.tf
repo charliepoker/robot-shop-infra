@@ -86,9 +86,7 @@ module "rds" {
   db_username            = var.db_username
 }
 
-# ────────── Task 8 — ECR ────────────────────────────────────────────────────────
-
-
+# ──────────────────   ECR ────────────────────────────────────────────────────────
 module "ecr" {
   source = "../../modules/ecr"
 
@@ -96,8 +94,7 @@ module "ecr" {
   environment = var.environment
 }
 
-# ────────── Task 8 — ACM ────────────────────────────────────────────────────────
-
+# ────────────────────  ACM ────────────────────────────────────────────────────────
 module "acm" {
   source = "../../modules/acm"
 
@@ -106,30 +103,26 @@ module "acm" {
   environment = var.environment
 }
 
-# ── Task 9 — Secrets Manager ─────────────────────────────────────────────────
-# Added in Task 9
+# ───────────────── Secrets Manager ─────────────────────────────────────────────────
+module "secrets_manager" {
+  source = "../../modules/secrets-manager"
 
-# module "secrets_manager" {
-#   source = "../../modules/secrets-manager"
-#
-#   name_prefix = var.name_prefix
-#   environment = var.environment
-#   db_host     = module.rds.db_endpoint
-#   db_port     = module.rds.db_port
-#   db_name     = var.db_name
-#   db_username = var.db_username
-#   db_password = module.rds.db_password
-# }
+  name_prefix = var.name_prefix
+  environment = var.environment
+  db_host     = module.rds.db_endpoint
+  db_port     = module.rds.db_port
+  db_name     = var.db_name
+  db_username = var.db_username
+  db_password = module.rds.db_password
+}
 
-# ── Task 9 — GitHub OIDC ─────────────────────────────────────────────────────
-# Added in Task 9
+# ─────────────────  GitHub OIDC ─────────────────────────────────────────────────────
+module "github_oidc" {
+  source = "../../modules/github-oidc"
 
-# module "github_oidc" {
-#   source = "../../modules/github-oidc"
-#
-#   name_prefix   = var.name_prefix
-#   environment   = var.environment
-#   github_org    = var.github_org
-#   github_repo   = var.github_repo
-#   ecr_repo_arns = module.ecr.repository_arns
-# }
+  name_prefix   = var.name_prefix
+  environment   = var.environment
+  github_org    = var.github_org
+  github_repo   = var.github_repo
+  ecr_repo_arns = module.ecr.repository_arns
+}
