@@ -77,26 +77,24 @@ variable "db_username" {
   sensitive   = true
 }
 
-# ── ECR ───────────────────────────────────────────────────────────────────────
-# Uncommented in Task 8 (ecr module)
-
-# variable "ecr_repos" {
-#   description = "List of ECR repository names — one per Robot Shop microservice"
-#   type        = list(string)
-#   default = [
-#     "cart",
-#     "catalogue",
-#     "dispatch",
-#     "mongodb",
-#     "mysql",
-#     "payment",
-#     "rabbitmq",
-#     "ratings",
-#     "shipping",
-#     "user",
-#     "web",
-#   ]
-# }
+# ─────────── ECR ───────────────────────────────────────────────────────────────────
+variable "ecr_repos" {
+  description = "List of ECR repository names — one per Robot Shop microservice"
+  type        = list(string)
+  default = [
+    "cart",
+    "catalogue",
+    "dispatch",
+    "mongodb",
+    "mysql",
+    "payment",
+    "rabbitmq",
+    "ratings",
+    "shipping",
+    "user",
+    "web",
+  ]
+}
 
 # ── GitHub OIDC ───────────────────────────────────────────────────────────────
 # Uncommented in Task 9 (github-oidc module)

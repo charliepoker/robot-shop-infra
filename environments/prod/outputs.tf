@@ -71,15 +71,15 @@ output "db_port" {
   value = module.rds.db_port
 }
 
-# ── Task 8 — ECR + ACM ───────────────────────────────────────────────────────
+# ────────────── Task 8 — ECR + ACM ───────────────────────────────────────────────
 
-# output "ecr_repository_urls" {
-#   value = module.ecr.repository_urls
-# }
+output "ecr_repository_urls" {
+  value = module.ecr.repository_urls
+}
 
-# output "acm_certificate_arn" {
-#   value = module.acm.certificate_arn
-# }
+output "acm_certificate_arn" {
+  value = module.acm.certificate_arn
+}
 
 # ── Task 9 — Secrets + OIDC ──────────────────────────────────────────────────
 

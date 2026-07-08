@@ -86,26 +86,25 @@ module "rds" {
   db_username            = var.db_username
 }
 
-# ── Task 8 — ECR ─────────────────────────────────────────────────────────────
-# Added in Task 8
+# ────────── Task 8 — ECR ────────────────────────────────────────────────────────
 
-# module "ecr" {
-#   source = "../../modules/ecr"
-#
-#   repo_names  = var.ecr_repos
-#   environment = var.environment
-# }
 
-# ── Task 8 — ACM ─────────────────────────────────────────────────────────────
-# Added in Task 8
+module "ecr" {
+  source = "../../modules/ecr"
 
-# module "acm" {
-#   source = "../../modules/acm"
-#
-#   domain_name = var.domain_name
-#   zone_id     = module.route53.zone_id
-#   environment = var.environment
-# }
+  repo_names  = var.ecr_repos
+  environment = var.environment
+}
+
+# ────────── Task 8 — ACM ────────────────────────────────────────────────────────
+
+module "acm" {
+  source = "../../modules/acm"
+
+  domain_name = var.domain_name
+  zone_id     = module.route53.zone_id
+  environment = var.environment
+}
 
 # ── Task 9 — Secrets Manager ─────────────────────────────────────────────────
 # Added in Task 9
