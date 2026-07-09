@@ -8,7 +8,7 @@ output "role_arn" {
     The CI workflow references it as:
       role-to-assume: $${{ secrets.AWS_ROLE_ARN }}
   EOT
-  value = aws_iam_role.github_actions.arn
+  value       = aws_iam_role.github_actions.arn
 }
 
 output "role_name" {

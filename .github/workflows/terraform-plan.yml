@@ -1,0 +1,195 @@
+name: Terraform Plan
+
+# Runs on every PR targeting main.
+# Purpose: catch formatting, validation, security, and cost issues
+# before code is merged — not after.
+#
+# This workflow does NOT apply anything to AWS.
+# Applying is handled by terraform-apply.yml on merge to main.
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'environments/**'
+      - 'modules/**'
+      - '.github/workflows/terraform-plan.yml'
+
+permissions:
+  contents: read
+  pull-requests: write   # allows the workflow to post plan output as a PR comment
+  id-token: write        # required for OIDC authentication to AWS
+
+env:
+  TF_VERSION: "1.11.4"
+  WORKING_DIR: environments/prod
+
+jobs:
+  pre-commit:
+    name: Pre-commit checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Install pre-commit
+        run: pip install pre-commit
+
+      - name: Install tflint
+        run: |
+          curl -sLo tflint.zip \
+            https://github.com/terraform-linters/tflint/releases/latest/download/tflint_linux_amd64.zip
+          unzip -o tflint.zip -d /usr/local/bin/
+          tflint --version
+
+      - name: Install tflint AWS plugin
+        run: tflint --init --config=.tflint.hcl
+
+      - name: Install Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+            | sh -s -- -b /usr/local/bin
+          trivy --version
+
+      - name: Run pre-commit hooks
+        run: pre-commit run --all-files --show-diff-on-failure
+
+  security-scan:
+    name: Security scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install checkov
+        run: pip install checkov
+
+      - name: Run checkov
+        run: |
+          checkov \
+            --directory ${{ env.WORKING_DIR }} \
+            --framework terraform \
+            --quiet \
+            --compact \
+            --soft-fail-on MEDIUM \
+            --hard-fail-on HIGH,CRITICAL
+
+      - name: Install Trivy (standalone security scan)
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+            | sh -s -- -b /usr/local/bin
+
+      - name: Run Trivy on environments/prod
+        run: |
+          trivy config \
+            --severity HIGH,CRITICAL \
+            --exit-code 1 \
+            ${{ env.WORKING_DIR }}
+
+  terraform-plan:
+    name: Terraform plan
+    runs-on: ubuntu-latest
+    needs: [pre-commit, security-scan]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      # OIDC authentication — no static AWS credentials stored in GitHub.
+      # The robot-shop-infra repo needs its own OIDC role separate from
+      # the one for robot-shop (application CI). This role needs read
+      # access to the S3 backend and the ability to call AWS APIs for
+      # terraform plan (read-only describe calls).
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_PLAN_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Terraform init
+        working-directory: ${{ env.WORKING_DIR }}
+        run: terraform init -input=false
+
+      - name: Terraform validate
+        working-directory: ${{ env.WORKING_DIR }}
+        run: terraform validate
+
+      - name: Terraform plan
+        id: plan
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          terraform plan \
+            -input=false \
+            -no-color \
+            -out=tfplan \
+          2>&1 | tee plan_output.txt
+        continue-on-error: true
+
+      # Post the plan output as a PR comment so reviewers can see what
+      # will change without running Terraform locally.
+      - name: Post plan to PR
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('${{ env.WORKING_DIR }}/plan_output.txt', 'utf8');
+            const maxLen = 65000;
+            const truncated = plan.length > maxLen
+              ? plan.substring(0, maxLen) + '\n\n... (truncated)'
+              : plan;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## Terraform Plan\n\`\`\`hcl\n${truncated}\n\`\`\``
+            });
+
+      - name: Fail if plan failed
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+  infracost:
+    name: Cost estimate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Infracost
+        uses: infracost/actions/setup@v3
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+
+      # Infracost generates a cost estimate from the Terraform code
+      # without needing AWS credentials or a live state file.
+      # It posts the breakdown as a PR comment showing which resources
+      # cost what and flags any resources with unknown costs.
+      - name: Generate cost estimate
+        run: |
+          infracost breakdown \
+            --path=${{ env.WORKING_DIR }} \
+            --format=json \
+            --out-file=infracost.json \
+            --show-skipped
+
+      - name: Post cost estimate to PR
+        uses: infracost/actions/comment@v3
+        with:
+          path: infracost.json
+          behavior: update   # updates existing comment rather than posting a new one

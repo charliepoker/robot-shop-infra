@@ -1,7 +1,7 @@
 resource "aws_secretsmanager_secret" "rds" {
-  name        = "${var.name_prefix}/rds-credentials"
-  description = "RDS MySQL credentials for the Robot Shop ratings service"
-
+  name                    = "${var.name_prefix}/rds-credentials"
+  description             = "RDS MySQL credentials for the Robot Shop ratings service"
+  kms_key_id              = var.kms_key_id
   recovery_window_in_days = var.recovery_window_in_days
 
   tags = {

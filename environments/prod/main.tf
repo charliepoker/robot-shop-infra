@@ -61,13 +61,10 @@ module "eks" {
 # ────────────── Karpenter ──────────────────────────────────────────────────────
 
 module "karpenter" {
-  source = "../../modules/karpenter"
-
-  name_prefix       = var.name_prefix
-  environment       = var.environment
-  cluster_name      = module.eks.cluster_name
-  cluster_endpoint  = module.eks.cluster_endpoint
-  oidc_provider_arn = module.eks.oidc_provider_arn
+  source           = "../../modules/karpenter"
+  cluster_name     = module.eks.cluster_name
+  cluster_endpoint = module.eks.cluster_endpoint
+  environment      = var.environment
 }
 
 # ────────────── RDS MySQL ──────────────────────────────────────────────────────
@@ -87,6 +84,8 @@ module "rds" {
 }
 
 # ──────────────────   ECR ────────────────────────────────────────────────────────
+
+
 module "ecr" {
   source = "../../modules/ecr"
 
@@ -95,15 +94,16 @@ module "ecr" {
 }
 
 # ────────────────────  ACM ────────────────────────────────────────────────────────
-module "acm" {
-  source = "../../modules/acm"
 
+module "acm" {
+  source      = "../../modules/acm"
   domain_name = var.domain_name
   zone_id     = module.route53.zone_id
   environment = var.environment
 }
 
 # ───────────────── Secrets Manager ─────────────────────────────────────────────────
+
 module "secrets_manager" {
   source = "../../modules/secrets-manager"
 
@@ -114,9 +114,12 @@ module "secrets_manager" {
   db_name     = var.db_name
   db_username = var.db_username
   db_password = module.rds.db_password
+  kms_key_id  = module.kms.s3_key_arn
 }
 
 # ─────────────────  GitHub OIDC ─────────────────────────────────────────────────────
+
+
 module "github_oidc" {
   source = "../../modules/github-oidc"
 

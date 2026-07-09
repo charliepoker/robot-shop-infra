@@ -18,39 +18,46 @@ variable "cluster_endpoint" {
   type        = string
 }
 
-variable "oidc_provider_arn" {
-  description = <<-EOT
-    EKS OIDC provider ARN. Kept here for reference and future IRSA use.
-    The Karpenter submodule itself uses Pod Identity (not IRSA) so this is
-    not passed to the submodule — but it is exported as an output in case
-    other resources in this module need it later.
-  EOT
-  type        = string
-}
 
-variable "name_prefix" {
-  description = "Resource name prefix used for tagging and naming supplementary resources"
-  type        = string
-}
 
 variable "environment" {
   description = "Environment label used in tags"
   type        = string
 }
 
-variable "karpenter_namespace" {
-  description = <<-EOT
-    Kubernetes namespace where Karpenter will be installed via Helm.
-    Must match the namespace used in the Pod Identity association.
-    "kube-system" is the AWS-recommended namespace — it avoids creating
-    an additional namespace and keeps all platform components together.
-  EOT
-  type        = string
-  default     = "kube-system"
-}
+# variable "oidc_provider_arn" {
+#   description = <<-EOT
+#     EKS OIDC provider ARN. Kept here for reference and future IRSA use.
+#     The Karpenter submodule itself uses Pod Identity (not IRSA) so this is
+#     not passed to the submodule — but it is exported as an output in case
+#     other resources in this module need it later.
+#   EOT
+#   type        = string
+# }
 
-variable "karpenter_service_account" {
-  description = "Karpenter controller service account name — must match the Helm chart default"
-  type        = string
-  default     = "karpenter"
-}
+# variable "name_prefix" {
+#   description = "Resource name prefix used for tagging and naming supplementary resources"
+#   type        = string
+# }
+
+# variable "environment" {
+#   description = "Environment label used in tags"
+#   type        = string
+# }
+
+# variable "karpenter_namespace" {
+#   description = <<-EOT
+#     Kubernetes namespace where Karpenter will be installed via Helm.
+#     Must match the namespace used in the Pod Identity association.
+#     "kube-system" is the AWS-recommended namespace — it avoids creating
+#     an additional namespace and keeps all platform components together.
+#   EOT
+#   type        = string
+#   default     = "kube-system"
+# }
+
+# variable "karpenter_service_account" {
+#   description = "Karpenter controller service account name — must match the Helm chart default"
+#   type        = string
+#   default     = "karpenter"
+# }

@@ -9,7 +9,7 @@ output "role_arn" {
     automatically associated — the annotation is not required.
     Useful to record for audit purposes.
   EOT
-  value = module.karpenter.iam_role_arn
+  value       = module.karpenter.iam_role_arn
 }
 
 output "role_name" {
@@ -26,7 +26,7 @@ output "node_iam_role_name" {
       spec:
         role: <this value>
   EOT
-  value = module.karpenter.node_iam_role_name
+  value       = module.karpenter.node_iam_role_name
 }
 
 output "node_iam_role_arn" {
@@ -41,7 +41,7 @@ output "instance_profile_name" {
     Also referenced in the EC2NodeClass if you pin the instance profile
     explicitly instead of using the role name.
   EOT
-  value = module.karpenter.instance_profile_name
+  value       = module.karpenter.instance_profile_name
 }
 
 # ── Interruption handling ─────────────────────────────────────────────────────
@@ -52,7 +52,7 @@ output "queue_name" {
     MUST match the Helm value settings.interruptionQueue in Phase 2.
     Defaults to the cluster name — verify this matches before installing.
   EOT
-  value = module.karpenter.queue_name
+  value       = module.karpenter.queue_name
 }
 
 output "queue_arn" {
@@ -74,10 +74,10 @@ output "helm_values_summary" {
     helm-values file for Karpenter.
   EOT
   value = {
-    cluster_name       = var.cluster_name
-    cluster_endpoint   = var.cluster_endpoint
-    queue_name         = module.karpenter.queue_name
-    node_role_name     = module.karpenter.node_iam_role_name
+    cluster_name        = var.cluster_name
+    cluster_endpoint    = var.cluster_endpoint
+    queue_name          = module.karpenter.queue_name
+    node_role_name      = module.karpenter.node_iam_role_name
     controller_role_arn = module.karpenter.iam_role_arn
   }
 }

@@ -1,0 +1,47 @@
+repos:
+  # ── General file hygiene ──────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.md$'
+      - id: end-of-file-fixer
+        exclude: '\.md$'
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: detect-private-key   # blocks accidental credential commits
+
+  # ── Terraform-specific hooks ──────────────────────────────────────────────
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.96.1
+    hooks:
+      # Formats all .tf files to canonical HCL style.
+      # Fails if any file needed reformatting — forces consistent style.
+      - id: terraform_fmt
+        args:
+          - --args=-diff
+          - --args=-recursive
+
+      # Validates Terraform syntax and internal consistency.
+      # --backend=false avoids needing S3 credentials locally.
+      - id: terraform_validate
+        args:
+          - --tf-init-args=-backend=false
+
+      # Lints for provider-specific issues tflint knows about:
+      # invalid instance types, deprecated arguments, missing variables.
+      # Requires .tflint.hcl in repo root (created below).
+      - id: terraform_tflint
+        args:
+          - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
+
+      # Security scanning — replaces the deprecated tfsec hook.
+      # Scans Terraform files for misconfigurations before they reach AWS.
+      - id: terraform_trivy
+        args:
+          - --args=--severity HIGH,CRITICAL
+          - --args=--exit-code 1
+          - --args=--ignorefile=__GIT_WORKING_DIR__/.trivyignore
+          - --args=--skip-dirs .terraform
+          - --args=--skip-dirs terraform-aws-modules

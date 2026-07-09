@@ -4,7 +4,7 @@ output "db_endpoint" {
     Passed to modules/secrets-manager as db_host.
     Written into the JSON secret that ESO syncs to a K8s Secret.
   EOT
-  value = module.rds.db_instance_address
+  value       = module.rds.db_instance_address
 }
 
 output "db_port" {
@@ -35,8 +35,8 @@ output "db_password" {
     in RDS state. This output comes from random_password, which IS in state
     (encrypted). The modules/secrets-manager module writes it to AWS SM.
   EOT
-  value     = random_password.db.result
-  sensitive = true
+  value       = random_password.db.result
+  sensitive   = true
 }
 
 output "security_group_id" {

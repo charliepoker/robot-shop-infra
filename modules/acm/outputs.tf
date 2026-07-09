@@ -7,7 +7,7 @@ output "certificate_arn" {
     Referenced in Phase 2 ALB Ingress annotations:
       alb.ingress.kubernetes.io/certificate-arn: <this value>
   EOT
-  value = aws_acm_certificate_validation.wildcard.certificate_arn
+  value       = aws_acm_certificate_validation.wildcard.certificate_arn
 }
 
 output "certificate_domain" {

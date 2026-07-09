@@ -5,7 +5,7 @@ output "repository_urls" {
       docker push <url>:<sha>
     Example: { "cart" = "448049792905.dkr.ecr.us-east-1.amazonaws.com/cart" }
   EOT
-  value = { for k, v in aws_ecr_repository.this : k => v.repository_url }
+  value       = { for k, v in aws_ecr_repository.this : k => v.repository_url }
 }
 
 output "repository_arns" {
@@ -14,7 +14,7 @@ output "repository_arns" {
     Passed to modules/github-oidc to scope the CI IAM policy to only
     these specific repos — not all ECR repos in the account.
   EOT
-  value = [for v in aws_ecr_repository.this : v.arn]
+  value       = [for v in aws_ecr_repository.this : v.arn]
 }
 
 output "registry_id" {
@@ -28,7 +28,7 @@ output "registry_url" {
     Used in GitHub Actions for docker login:
       aws ecr get-login-password | docker login --username AWS --password-stdin <registry_url>
   EOT
-  value = "${values(aws_ecr_repository.this)[0].registry_id}.dkr.ecr.${data.aws_region.current.region}.amazonaws.com"
+  value       = "${values(aws_ecr_repository.this)[0].registry_id}.dkr.ecr.${data.aws_region.current.region}.amazonaws.com"
 }
 
 data "aws_region" "current" {}

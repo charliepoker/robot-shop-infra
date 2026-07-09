@@ -8,9 +8,9 @@ locals {
   azs = slice(data.aws_availability_zones.available.names, 0, 3)
 
   # cidrsubnet("10.0.0.0/16", 8, N) adds 8 bits → /24 blocks
-  public_subnets  = [for i, _ in local.azs : cidrsubnet(var.vpc_cidr, 8, i)]       # .0 .1 .2
-  private_subnets = [for i, _ in local.azs : cidrsubnet(var.vpc_cidr, 8, i + 10)]  # .10 .11 .12
-  intra_subnets   = [for i, _ in local.azs : cidrsubnet(var.vpc_cidr, 8, i + 20)]  # .20 .21 .22
+  public_subnets  = [for i, _ in local.azs : cidrsubnet(var.vpc_cidr, 8, i)]      # .0 .1 .2
+  private_subnets = [for i, _ in local.azs : cidrsubnet(var.vpc_cidr, 8, i + 10)] # .10 .11 .12
+  intra_subnets   = [for i, _ in local.azs : cidrsubnet(var.vpc_cidr, 8, i + 20)] # .20 .21 .22
 }
 
 module "vpc" {
@@ -84,7 +84,8 @@ resource "aws_security_group" "vpc_endpoints" {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.vpc_cidr]
+    description = "Allow all egress within VPC"
   }
 
   tags = {

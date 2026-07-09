@@ -11,7 +11,7 @@ output "secret_arn" {
       remoteRef:
         key: robot-shop/rds-credentials
   EOT
-  value = aws_secretsmanager_secret.rds.arn
+  value       = aws_secretsmanager_secret.rds.arn
 }
 
 output "secret_name" {

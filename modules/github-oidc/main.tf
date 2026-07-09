@@ -1,8 +1,3 @@
-
-
-data "aws_caller_identity" "current" {}
-data "aws_partition" "current" {}
-
 # GitHub's OIDC provider — tells AWS to trust JWTs issued by GitHub Actions.
 # Only one of these should exist per AWS account. If you already have one
 # from another project, import it:
@@ -56,7 +51,7 @@ resource "aws_iam_role" "github_actions" {
   }
 }
 
-# ECR permissions 
+# ECR permissions
 resource "aws_iam_role_policy" "ecr" {
   name = "${var.name_prefix}-ecr-push-pull"
   role = aws_iam_role.github_actions.id

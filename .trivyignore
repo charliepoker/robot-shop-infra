@@ -1,0 +1,13 @@
+# AVD-AWS-0104: Unrestricted egress on VPC endpoints and RDS security groups
+# Accepted: private VPC, no internet gateway on affected subnets.
+# Restricting egress requires maintaining AWS service CIDR lists.
+AVD-AWS-0104
+
+# AVD-AWS-0040: EKS public API endpoint enabled
+# Accepted: portfolio project, no bastion/VPN. Private endpoint also enabled.
+# Production would restrict to office CIDR or disable entirely.
+AVD-AWS-0040
+
+# AVD-AWS-0041: EKS public endpoint accessible from 0.0.0.0/0
+# Same justification as AVD-AWS-0040 above.
+AVD-AWS-0041

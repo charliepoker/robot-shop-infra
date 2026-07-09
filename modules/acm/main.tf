@@ -12,9 +12,9 @@ resource "aws_acm_certificate" "wildcard" {
   }
 
   tags = {
-  Name        = "wildcard-${var.domain_name}"
-  Environment = var.environment
-}
+    Name        = "wildcard-${var.domain_name}"
+    Environment = var.environment
+  }
 }
 
 # Create the DNS validation CNAME records in Route53.

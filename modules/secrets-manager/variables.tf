@@ -35,6 +35,11 @@ variable "db_password" {
   sensitive   = true
 }
 
+variable "kms_key_id" {
+  description = "KMS key ARN for encrypting the secret — uses the S3 CMK"
+  type        = string
+}
+
 variable "recovery_window_in_days" {
   description = <<-EOT
     Days AWS holds a deleted secret before permanent destruction.

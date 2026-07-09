@@ -1,0 +1,56 @@
+name: Terraform Apply
+
+# Runs only on direct pushes to main (i.e. after a PR is merged).
+# This is the only workflow that actually changes AWS infrastructure.
+# The plan job on PRs gives reviewers full visibility before merge.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'environments/**'
+      - 'modules/**'
+
+permissions:
+  contents: read
+  id-token: write   # required for OIDC authentication
+
+env:
+  TF_VERSION: "1.11.4"
+  WORKING_DIR: environments/prod
+
+jobs:
+  terraform-apply:
+    name: Terraform apply
+    runs-on: ubuntu-latest
+    # Prevent concurrent applies — two simultaneous applies against the
+    # same state file would cause a lock conflict and potential corruption.
+    concurrency:
+      group: terraform-apply
+      cancel-in-progress: false
+
+    environment: prod   # requires a manual approval gate in GitHub settings
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_APPLY_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Terraform init
+        working-directory: ${{ env.WORKING_DIR }}
+        run: terraform init -input=false
+
+      - name: Terraform apply
+        working-directory: ${{ env.WORKING_DIR }}
+        run: terraform apply -input=false -auto-approve
