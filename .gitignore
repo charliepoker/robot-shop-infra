@@ -34,3 +34,5 @@ terraform.rc
 
 # Ignore terraform version file if managed per-environment via tfenv
 # .terraform-version
+
+/Docs/diagrams/robot-shop-architecture.drawio
