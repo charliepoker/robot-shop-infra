@@ -14,7 +14,7 @@ Runs the [Instana Robot Shop](https://github.com/instana/robot-shop) microservic
 
 ## Architecture
 
-![Robot Shop Infrastructure Architecture](docs/diagrams/robot-shop-infra.svg)
+![Robot Shop Infrastructure Architecture](Docs/diagrams/robot-shop-infra.svg)
 
 Every AWS resource in this diagram is provisioned by Terraform from an empty repository. No console clicks, no manual bootstrapping other than the S3 state bucket itself.
 
@@ -46,7 +46,7 @@ robot-shop-infra/
 ├── .github/workflows/
 │   ├── terraform-plan.yml       # PR: fmt, validate, tflint, trivy, checkov, plan, infracost
 │   └── terraform-apply.yml      # Push to main: apply via OIDC, gated on `prod` environment
-├── docs/
+├── Docs/
 │   ├── diagrams/
 │   │   └── robot-shop-infra.svg
 │   └── security-audit.md        # tfsec + checkov triage: fixed / false positive / accepted risk
