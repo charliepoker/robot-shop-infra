@@ -9,6 +9,7 @@
 #   Karpenter → EKS (needs cluster_name + OIDC provider ARN)
 #   AWS LB Controller → EKS (needs cluster_name; requires eks-pod-identity-agent addon)
 #   ExternalDNS → EKS (needs cluster_name), Route53 (needs zone_id)
+#   cert-manager → EKS (needs cluster_name), Route53 (needs zone_id)
 #   RDS       → VPC (intra subnets), KMS (RDS key)
 #   ECR       → no dependencies
 #   Secrets   → RDS (endpoint + generated password)
@@ -82,6 +83,16 @@ module "aws_lb_controller" {
 
 module "external_dns" {
   source = "../../modules/external-dns"
+
+  cluster_name   = module.eks.cluster_name
+  hosted_zone_id = module.route53.zone_id
+  domain_name    = var.domain_name
+}
+
+# ────────────── cert-manager (IAM only) ─────────────────────────────────────────
+
+module "cert_manager" {
+  source = "../../modules/cert-manager"
 
   cluster_name   = module.eks.cluster_name
   hosted_zone_id = module.route53.zone_id
