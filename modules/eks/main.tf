@@ -52,18 +52,52 @@ module "eks" {
   endpoint_private_access = true
 
   # ── Authentication ────────────────────────────────────────────────────────
-  # Access entry gives the Terraform caller cluster-admin automatically.
-  # No aws-auth ConfigMap editing required — that approach is deprecated.
-  enable_cluster_creator_admin_permissions = true
+  # No aws-auth ConfigMap editing required — access entries are the
+  # modern replacement for that. Admin access is granted explicitly via
+  # cluster_admin_principal_arns rather than enable_cluster_creator_admin_permissions,
+  # since that flag ties admin to whichever identity happens to run
+  # `terraform apply` and causes an access-entry replacement (not just a
+  # diff) any time a different principal — a human vs. the CI role — runs it.
+  enable_cluster_creator_admin_permissions = false
+
+  access_entries = {
+    for key, principal_arn in var.cluster_admin_principal_arns : key => {
+      principal_arn = principal_arn
+      policy_associations = {
+        admin = {
+          policy_arn = "arn:${data.aws_partition.current.partition}:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+  }
 
   # OIDC provider for IRSA — kept enabled because some Phase 2 tools
   # (cert-manager, ExternalDNS older charts) still reference it.
   # Pod Identity and IRSA coexist without conflict.
   enable_irsa = true
 
+  # The KMS key this module creates for envelope-encrypting Secrets defaults
+  # its key administrators to whichever identity runs `terraform apply` —
+  # same underlying pattern as enable_cluster_creator_admin_permissions
+  # above. Pin it explicitly so the key policy doesn't drift every time a
+  # different principal (human vs. CI role) runs Terraform.
+  kms_key_administrators = values(var.cluster_admin_principal_arns)
+
   # ── Secrets Encryption ────────────────────────────────────────────────────
-  # Encrypts Kubernetes Secrets in etcd using our KMS CMK.
-  # Without this, Secrets are base64 in etcd — not encrypted at rest.
+  # Encrypts Kubernetes Secrets in etcd. Without this, Secrets are base64 in
+  # etcd — not encrypted at rest.
+  #
+  # NOTE: provider_key_arn below is currently NOT the key actually in use.
+  # create_kms_key defaults to true in the upstream module, so it creates
+  # and uses its own CMK for this and ignores provider_key_arn. Switching
+  # to var.ebs_kms_key_arn (create_kms_key = false) would change the live
+  # cluster's encryption_config.provider.key_arn in place, but every Secret
+  # already written stays wrapped under the old CMK — that key would need
+  # every existing Secret rewritten under the new key before its deletion
+  # window elapses. Deferred as a real migration, not a config toggle.
   encryption_config = {
     provider_key_arn = var.ebs_kms_key_arn
     resources        = ["secrets"]

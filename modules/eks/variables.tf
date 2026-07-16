@@ -63,3 +63,14 @@ variable "node_desired_size" {
   type        = number
   default     = 2
 }
+
+variable "cluster_admin_principal_arns" {
+  description = <<-EOT
+    Map of IAM principal ARNs (users or roles) to grant EKS cluster-admin via
+    an explicit access entry. Used instead of enable_cluster_creator_admin_permissions,
+    which ties admin access to whichever identity happens to run `terraform apply`
+    and forces an access-entry replacement any time a different principal runs it.
+  EOT
+  type        = map(string)
+  default     = {}
+}

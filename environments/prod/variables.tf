@@ -62,6 +62,22 @@ variable "node_desired_size" {
   default = 2
 }
 
+variable "cluster_admin_principal_arns" {
+  description = <<-EOT
+    IAM principal ARNs granted EKS cluster-admin via an explicit access entry.
+    - ci_apply: the terraform-apply.yml OIDC role (AWS_APPLY_ROLE_ARN secret).
+      This role is a bootstrap resource created outside this repo's Terraform
+      (it has to exist before Terraform can run, so there's no module output
+      to reference it by) — it's the identity that actually applies this stack.
+    - obinna: personal IAM user, for local kubectl/Helm/Argo CD access.
+  EOT
+  type        = map(string)
+  default = {
+    ci_apply = "arn:aws:iam::448049792905:role/robot-shop-infra-github-actions"
+    obinna   = "arn:aws:iam::448049792905:user/obinna"
+  }
+}
+
 # ────────── RDS ───────────────────────────────────────────────────────────────────
 
 variable "db_name" {
