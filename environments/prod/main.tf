@@ -8,6 +8,7 @@
 #   EKS       → VPC (needs subnet IDs), KMS (EBS key)
 #   Karpenter → EKS (needs cluster_name + OIDC provider ARN)
 #   AWS LB Controller → EKS (needs cluster_name; requires eks-pod-identity-agent addon)
+#   ExternalDNS → EKS (needs cluster_name), Route53 (needs zone_id)
 #   RDS       → VPC (intra subnets), KMS (RDS key)
 #   ECR       → no dependencies
 #   Secrets   → RDS (endpoint + generated password)
@@ -73,6 +74,16 @@ module "karpenter" {
 module "aws_lb_controller" {
   source       = "../../modules/aws-lb-controller"
   cluster_name = module.eks.cluster_name
+}
+
+# ────────────── ExternalDNS (IAM only) ──────────────────────────────────────────
+
+module "external_dns" {
+  source = "../../modules/external-dns"
+
+  cluster_name   = module.eks.cluster_name
+  hosted_zone_id = module.route53.zone_id
+  domain_name    = var.domain_name
 }
 
 # ────────────── RDS MySQL ──────────────────────────────────────────────────────
