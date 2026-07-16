@@ -7,6 +7,7 @@
 #   ACM       → Route53 (needs zone_id)
 #   EKS       → VPC (needs subnet IDs), KMS (EBS key)
 #   Karpenter → EKS (needs cluster_name + OIDC provider ARN)
+#   AWS LB Controller → EKS (needs cluster_name; requires eks-pod-identity-agent addon)
 #   RDS       → VPC (intra subnets), KMS (RDS key)
 #   ECR       → no dependencies
 #   Secrets   → RDS (endpoint + generated password)
@@ -65,6 +66,13 @@ module "karpenter" {
   cluster_name     = module.eks.cluster_name
   cluster_endpoint = module.eks.cluster_endpoint
   environment      = var.environment
+}
+
+# ────────────── AWS Load Balancer Controller (IAM only) ────────────────────────
+
+module "aws_lb_controller" {
+  source       = "../../modules/aws-lb-controller"
+  cluster_name = module.eks.cluster_name
 }
 
 # ────────────── RDS MySQL ──────────────────────────────────────────────────────
