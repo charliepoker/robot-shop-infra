@@ -13,6 +13,7 @@
 #   RDS       → VPC (intra subnets), KMS (RDS key)
 #   ECR       → no dependencies
 #   Secrets   → RDS (endpoint + generated password)
+#   ExternalSecrets → EKS (needs cluster_name), Secrets (needs secret_arns), KMS (S3 key)
 #   OIDC      → ECR (repo ARNs for IAM policy scope)
 # -----------------------------------------------------------------------------
 
@@ -147,6 +148,16 @@ module "secrets_manager" {
   db_username = var.db_username
   db_password = module.rds.db_password
   kms_key_id  = module.kms.s3_key_arn
+}
+
+# ────────────── External Secrets Operator (IAM only) ───────────────────────────
+
+module "external_secrets" {
+  source = "../../modules/external-secrets"
+
+  cluster_name = module.eks.cluster_name
+  secret_arns  = [module.secrets_manager.secret_arn]
+  kms_key_arn  = module.kms.s3_key_arn
 }
 
 # ─────────────────  GitHub OIDC ─────────────────────────────────────────────────────
