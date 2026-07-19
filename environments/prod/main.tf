@@ -14,6 +14,7 @@
 #   ECR       → no dependencies
 #   Secrets   → RDS (endpoint + generated password)
 #   ExternalSecrets → EKS (needs cluster_name), Secrets (needs secret_arns), KMS (S3 key)
+#   Velero    → EKS (needs cluster_name), KMS (S3 key)
 #   OIDC      → ECR (repo ARNs for IAM policy scope)
 # -----------------------------------------------------------------------------
 
@@ -157,6 +158,17 @@ module "external_secrets" {
 
   cluster_name = module.eks.cluster_name
   secret_arns  = [module.secrets_manager.secret_arn]
+  kms_key_arn  = module.kms.s3_key_arn
+}
+
+# ────────────── Velero (backup bucket + IAM) ────────────────────────────────────
+
+module "velero" {
+  source = "../../modules/velero"
+
+  name_prefix  = var.name_prefix
+  environment  = var.environment
+  cluster_name = module.eks.cluster_name
   kms_key_arn  = module.kms.s3_key_arn
 }
 
