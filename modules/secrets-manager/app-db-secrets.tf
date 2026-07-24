@@ -27,6 +27,11 @@ variable "app_db_mysql_host" {
   type        = string
 }
 
+variable "app_db_kms_key_id" {
+  description = "KMS key ARN for encrypting per-service secrets — uses the S3 CMK"
+  type        = string
+}
+
 variable "app_db_mysql_port" {
   description = "Port the RDS MySQL instance listens on"
   type        = number
@@ -92,6 +97,7 @@ resource "aws_secretsmanager_secret" "app_db" {
 
   name                    = "robot-shop/${each.key}-db"
   description             = "MySQL credentials for the robot-shop ${each.key} service"
+  kms_key_id              = var.app_db_kms_key_id
   recovery_window_in_days = var.app_db_secret_recovery_window_days
 
   tags = merge(

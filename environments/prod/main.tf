@@ -151,6 +151,12 @@ module "secrets_manager" {
   kms_key_id  = module.kms.s3_key_arn
 
   app_db_mysql_host = module.rds.db_endpoint
+  app_db_kms_key_id = module.kms.s3_key_arn
+
+  app_db_credentials = { # NEW — was missing entirely
+    ratings  = { database = "ratings", username = "ratings" }
+    shipping = { database = "cities", username = "shipping" }
+  }
 }
 
 # ────────────── External Secrets Operator (IAM only) ───────────────────────────
@@ -159,8 +165,12 @@ module "external_secrets" {
   source = "../../modules/external-secrets"
 
   cluster_name = module.eks.cluster_name
-  secret_arns  = [module.secrets_manager.secret_arn]
   kms_key_arn  = module.kms.s3_key_arn
+
+  secret_arns = concat(
+    [module.secrets_manager.secret_arn],
+    values(module.secrets_manager.app_db_secret_arns),
+  )
 }
 
 # ────────────── Velero (backup bucket + IAM) ────────────────────────────────────
