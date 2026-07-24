@@ -86,6 +86,11 @@ output "rds_secret_arn" {
   value = module.secrets_manager.secret_arn
 }
 
+# ─────────────────────── Velero ───────────────────────────────────────────────
+output "velero_bucket_name" {
+  value = module.velero.bucket_name
+}
+
 output "github_actions_role_arn" {
   value = module.github_oidc.role_arn
 }
