@@ -149,6 +149,8 @@ module "secrets_manager" {
   db_username = var.db_username
   db_password = module.rds.db_password
   kms_key_id  = module.kms.s3_key_arn
+
+  app_db_mysql_host = module.rds.db_endpoint
 }
 
 # ────────────── External Secrets Operator (IAM only) ───────────────────────────
