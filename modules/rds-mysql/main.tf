@@ -80,13 +80,16 @@ module "rds" {
   # no separate random_password to fall out of sync, and no password_wo_version
   # counter to forget to bump.
   #
-  # The managed secret is encrypted with the same CMK the ESO IAM policy already
-  # grants kms:Decrypt on, so the mirroring data source (and, if you ever switch
-  # to direct reads, ESO itself) can decrypt it with no policy change.
-  db_name                       = var.db_name
-  username                      = var.db_username
-  manage_master_user_password   = true
-  master_user_secret_kms_key_id = var.kms_key_arn
+  # No master_user_secret_kms_key_id: the managed secret is encrypted with the
+  # AWS-owned default aws/secretsmanager key, not our CMK. That key cannot be
+  # changed on an existing instance (AWS rejects it on ModifyDBInstance), and
+  # it doesn't matter for us anyway — ESO never reads this managed secret. It
+  # only reads the mirrored robot-shop/rds-credentials secret below, which
+  # modules/secrets-manager encrypts with our CMK explicitly.
+  db_name                     = var.db_name
+  username                    = var.db_username
+  manage_master_user_password = true
+
 
   # ── Network ───────────────────────────────────────────────────────────────
   # Use the subnet group and security group we created above.
