@@ -1,18 +1,12 @@
 data "aws_vpc" "selected" {
   id = var.vpc_id
 }
-# Generate a secure random password — 24 chars, special characters included.
-# Terraform stores this in state (encrypted), but we immediately write it
-# to Secrets Manager so the actual database credential lives in AWS SM,
-# not in git or in plain-text state.
-resource "random_password" "db" {
-  length           = 24
-  special          = true
-  override_special = "!#$%&*()-_=+[]{}<>:?"
-
-  # Trigger password regeneration only on explicit replacement.
-  # Do not set lifecycle.ignore_changes — you want rotation to work.
-}
+# The master password is managed by RDS itself (manage_master_user_password
+# below), not by Terraform. RDS generates it inside AWS and writes it to an
+# AWS-managed Secrets Manager secret at instance-creation time. The instance and
+# the secret are therefore set by a single atomic AWS operation and cannot
+# drift. Terraform never sees or stores the master password, and there is no
+# random_password resource to regenerate out of step with the instance.
 
 # Security group — allows MySQL only from EKS worker node security group.
 # SG-to-SG is more robust than CIDR: EKS nodes keep their SG when their
@@ -80,13 +74,19 @@ module "rds" {
   storage_encrypted     = true
   kms_key_id            = var.kms_key_arn
 
-  # ── Credentials (v7.2.0 write-only pattern) ───────────────────────────────
-  # password_wo accepts the value at apply but never writes it to state.
-  # password_wo_version is a counter — increment it to signal a rotation.
-  db_name             = var.db_name
-  username            = var.db_username
-  password_wo         = random_password.db.result
-  password_wo_version = 1
+  # ── Credentials (RDS-managed master password) ─────────────────────────────
+  # RDS generates and owns the master password and stores it in an AWS-managed
+  # secret. This makes instance/secret drift structurally impossible: there is
+  # no separate random_password to fall out of sync, and no password_wo_version
+  # counter to forget to bump.
+  #
+  # The managed secret is encrypted with the same CMK the ESO IAM policy already
+  # grants kms:Decrypt on, so the mirroring data source (and, if you ever switch
+  # to direct reads, ESO itself) can decrypt it with no policy change.
+  db_name                       = var.db_name
+  username                      = var.db_username
+  manage_master_user_password   = true
+  master_user_secret_kms_key_id = var.kms_key_arn
 
   # ── Network ───────────────────────────────────────────────────────────────
   # Use the subnet group and security group we created above.
@@ -146,4 +146,25 @@ module "rds" {
   tags = {
     Environment = var.environment
   }
+}
+
+# Read the RDS-managed master secret so the module can expose the actual
+# username and password to modules/secrets-manager for mirroring into the
+# stable-named robot-shop/rds-credentials secret that ESO consumes.
+#
+# The managed secret's value is a JSON document: {"username":..,"password":..}.
+# This data source depends on the managed secret's ARN, so Terraform reads it
+# only after RDS has created and populated it.
+#
+# NOTE: the password does transit Terraform state via this data source. That is
+# the same exposure the previous random_password approach had, and no worse. If
+# you later require the password to never touch state, switch ESO to read the
+# managed secret directly (see runbook) and delete this data source plus the
+# mirror — at the cost of handling the managed secret's dynamic name in gitops.
+data "aws_secretsmanager_secret_version" "rds_managed" {
+  secret_id = module.rds.db_instance_master_user_secret_arn
+}
+
+locals {
+  rds_managed_creds = jsondecode(data.aws_secretsmanager_secret_version.rds_managed.secret_string)
 }
