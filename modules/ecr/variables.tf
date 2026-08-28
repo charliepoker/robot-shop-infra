@@ -10,14 +10,23 @@ variable "environment" {
 
 variable "image_tag_mutability" {
   description = <<-EOT
-    IMMUTABLE: once pushed, a tag cannot be overwritten.
-    This is critical for traceability — you can always trace a running
-    container back to the exact git commit that produced it.
-    MUTABLE would allow someone to silently overwrite :latest, making
-    rollbacks and incident investigations unreliable.
+    IMMUTABLE_WITH_EXCLUSION: real image tags stay immutable (a running
+    container always maps to the exact commit that built it), EXCEPT tags
+    matching mutable_tag_exclusions. Cosign writes signature/attestation tags
+    as `sha256-<digest>.sig` / `.att`; these are content-addressed and must be
+    overwritable when the same image is re-signed. Excluding `sha256-*` keeps
+    image tags immutable while letting cosign re-attach cleanly.
+    Requires AWS provider >= 6.8.0.
+    Valid: MUTABLE, IMMUTABLE, IMMUTABLE_WITH_EXCLUSION, MUTABLE_WITH_EXCLUSION.
   EOT
   type        = string
-  default     = "IMMUTABLE"
+  default     = "IMMUTABLE_WITH_EXCLUSION"
+}
+
+variable "mutable_tag_exclusions" {
+  description = "Tag wildcard patterns kept mutable under *_WITH_EXCLUSION (cosign sig/att artifacts)."
+  type        = list(string)
+  default     = ["sha256-*"]
 }
 
 variable "tagged_images_to_keep" {

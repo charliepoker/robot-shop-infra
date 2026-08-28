@@ -4,12 +4,21 @@ resource "aws_ecr_repository" "this" {
   name                 = each.key
   image_tag_mutability = var.image_tag_mutability
 
+  # Keep image tags immutable, but let cosign's sha256-*.sig/.att tags be
+  # overwritten so re-signing an unchanged digest never hits TAG_INVALID.
+  dynamic "image_tag_mutability_exclusion_filter" {
+    for_each = endswith(var.image_tag_mutability, "WITH_EXCLUSION") ? var.mutable_tag_exclusions : []
+    iterator = excl
+    content {
+      filter      = excl.value
+      filter_type = "WILDCARD"
+    }
+  }
+
   image_scanning_configuration {
     scan_on_push = true
   }
 
-  # AES256 is the ECR default and costs nothing extra.
-  # Upgrade to KMS if you need CMK-level audit trails on image decryption.
   encryption_configuration {
     encryption_type = "AES256"
   }
