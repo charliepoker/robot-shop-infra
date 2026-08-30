@@ -196,3 +196,11 @@ module "github_oidc" {
   github_repo   = var.github_repo
   ecr_repo_arns = module.ecr.repository_arns
 }
+
+# ─────────────────  Kyverno ─────────────────────────────────────────────────────
+
+
+module "kyverno" {
+  source       = "../../modules/kyverno"
+  cluster_name = module.eks.cluster_name
+}
