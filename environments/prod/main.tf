@@ -170,6 +170,7 @@ module "external_secrets" {
   secret_arns = concat(
     [module.secrets_manager.secret_arn],
     values(module.secrets_manager.app_db_secret_arns),
+    [module.secrets_manager.grafana_admin_secret_arn],
   )
 }
 

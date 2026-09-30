@@ -11,3 +11,11 @@ AVD-AWS-0040
 # AVD-AWS-0041: EKS public endpoint accessible from 0.0.0.0/0
 # Same justification as AVD-AWS-0040 above.
 AVD-AWS-0041
+
+# AVD-AWS-0031: ECR repository tags are mutable
+# Accepted: image_tag_mutability is IMMUTABLE_WITH_EXCLUSION, not MUTABLE.
+# Real app image tags stay immutable; only cosign's sha256-*.sig/.att
+# artifact tags are excluded (they're content-addressed and must be
+# overwritable for re-signing). Trivy's AWS-0031 check doesn't yet
+# recognize the *_WITH_EXCLUSION mutability values as compliant.
+AVD-AWS-0031
