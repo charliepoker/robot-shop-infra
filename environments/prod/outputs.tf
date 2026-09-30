@@ -94,3 +94,30 @@ output "velero_bucket_name" {
 output "github_actions_role_arn" {
   value = module.github_oidc.role_arn
 }
+
+# ─────────────── Cognito ─────────────────────────────────────────────────────────
+
+output "cognito_user_pool_id" {
+  description = "Cognito user pool ID — used to create the admin user with the CLI"
+  value       = module.cognito.user_pool_id
+}
+
+output "cognito_user_pool_arn" {
+  description = "Cognito user pool ARN — alb.ingress.kubernetes.io/auth-idp-cognito"
+  value       = module.cognito.user_pool_arn
+}
+
+output "cognito_user_pool_client_id" {
+  description = "Cognito app client ID — alb.ingress.kubernetes.io/auth-idp-cognito"
+  value       = module.cognito.user_pool_client_id
+}
+
+output "cognito_user_pool_domain" {
+  description = "Cognito hosted UI domain prefix — alb.ingress.kubernetes.io/auth-idp-cognito"
+  value       = module.cognito.user_pool_domain
+}
+
+output "cognito_hosted_ui_url" {
+  description = "Cognito sign-in page base URL"
+  value       = module.cognito.hosted_ui_url
+}

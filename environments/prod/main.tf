@@ -205,3 +205,16 @@ module "kyverno" {
   source       = "../../modules/kyverno"
   cluster_name = module.eks.cluster_name
 }
+
+# ─────────────────  Cognito (ALB authentication for Prometheus) ─────────────────
+
+module "cognito" {
+  source = "../../modules/cognito"
+
+  name_prefix = var.name_prefix
+  environment = var.environment
+
+  # Hostnames whose ALB login redirect must be allowed. Prometheus only:
+  # Grafana has its own login and is not placed behind Cognito.
+  protected_hostnames = ["prometheus.${var.domain_name}"]
+}
