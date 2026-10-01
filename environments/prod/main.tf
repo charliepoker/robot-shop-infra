@@ -171,6 +171,7 @@ module "external_secrets" {
     [module.secrets_manager.secret_arn],
     values(module.secrets_manager.app_db_secret_arns),
     [module.secrets_manager.grafana_admin_secret_arn],
+    [module.secrets_manager.alertmanager_slack_secret_arn], # Phase 5: Slack webhook for Alertmanager
   )
 }
 

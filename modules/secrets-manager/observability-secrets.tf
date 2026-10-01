@@ -1,7 +1,7 @@
 ###############################################################################
 # Observability credentials
 #
-# Phase 5 Task 1. Grafana admin login, generated here and stored in Secrets
+# Grafana admin login, generated here and stored in Secrets
 # Manager so it never appears in Git or in Helm values. External Secrets
 # Operator projects it into the monitoring namespace as monitoring/grafana-admin.
 #
@@ -11,9 +11,8 @@
 # recovery_window_in_days) and the random provider already pinned in
 # versions.tf.
 #
-# Phase 5 Task 5 adds the Alertmanager Slack webhook to this file. That one
-# cannot be generated, so it will be created empty and its value set out of
-# band.
+# That one cannot be generated, so it is created with a placeholder and its
+# real value is set out of band.
 ###############################################################################
 
 # -----------------------------------------------------------------------------
@@ -70,6 +69,43 @@ resource "aws_secretsmanager_secret_version" "grafana_admin" {
 }
 
 # -----------------------------------------------------------------------------
+# Alertmanager Slack webhook
+#
+#  the URL is issued by
+# Slack. Terraform creates the secret with an obviously fake placeholder so the
+# External Secrets Operator has something to sync and the Alertmanager pod can
+# start; the real URL is then set out of band with `aws secretsmanager
+# put-secret-value`, which keeps it out of Git, CI logs and Terraform state.
+
+# -----------------------------------------------------------------------------
+
+resource "aws_secretsmanager_secret" "alertmanager_slack" {
+  name                    = "${var.name_prefix}/alertmanager-slack"
+  description             = "Slack incoming webhook URL used by Alertmanager to send alert notifications"
+  kms_key_id              = var.kms_key_id
+  recovery_window_in_days = var.recovery_window_in_days
+
+  tags = {
+    Name        = "${var.name_prefix}/alertmanager-slack"
+    Environment = var.environment
+    Component   = "observability"
+    ManagedBy   = "terraform"
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "alertmanager_slack" {
+  secret_id = aws_secretsmanager_secret.alertmanager_slack.id
+
+  secret_string = jsonencode({
+    SLACK_WEBHOOK_URL = "https://hooks.slack.com/services/REPLACE_ME_AFTER_APPLY"
+  })
+
+  lifecycle {
+    ignore_changes = [secret_string]
+  }
+}
+
+# -----------------------------------------------------------------------------
 # Outputs
 # -----------------------------------------------------------------------------
 
@@ -81,4 +117,14 @@ output "grafana_admin_secret_arn" {
 output "grafana_admin_secret_name" {
   description = "Name of the Grafana admin credential secret, used as the ExternalSecret remote key"
   value       = aws_secretsmanager_secret.grafana_admin.name
+}
+
+output "alertmanager_slack_secret_arn" {
+  description = "ARN of the Alertmanager Slack webhook secret, granted to the External Secrets Operator role"
+  value       = aws_secretsmanager_secret.alertmanager_slack.arn
+}
+
+output "alertmanager_slack_secret_name" {
+  description = "Name of the Alertmanager Slack webhook secret, used as the ExternalSecret remote key"
+  value       = aws_secretsmanager_secret.alertmanager_slack.name
 }
