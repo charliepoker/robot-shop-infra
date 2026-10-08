@@ -24,9 +24,9 @@ It runs the [Instana Robot Shop](https://github.com/instana/robot-shop) microser
 
 ## Architecture
 
-![AWS infrastructure: VPC across 3 AZs with public, private and intra subnets, EKS, RDS, endpoints and regional services](docs/diagrams/aws_infra.drawio.svg)
+![AWS infrastructure: VPC across 3 AZs with public, private and intra subnets, EKS, RDS, endpoints and regional services](Docs/diagrams/aws_infra.drawio.svg)
 
-*Editable source: [`docs/diagrams/aws-infrastructure.drawio`](docs/diagrams/aws-infrastructure.drawio). *
+*Editable source: [`Docs/diagrams/aws_infra.drawio.svg`](Docs/diagrams/aws_infra.drawio.svg) (the SVG embeds the draw.io diagram; open it in draw.io to edit).*
 
 **How to read it.** The numbers match the diagram.
 
@@ -55,7 +55,7 @@ The infrastructure was not designed in one pass. Each phase of the project added
 | **5 · Observability** | Sep 30–Oct 1 | `cognito` user pool; Grafana admin and Alertmanager Slack secrets | Prometheus has no login of its own, so the ALB authenticates against Cognito; observability credentials come from Secrets Manager, not from Git |
 
 What Phase 1 looked like, before the platform phases: 
-![`docs/diagrams/robot-shop-infra.svg`](docs/diagrams/robot-shop-infra.svg).
+![Phase 1 architecture](Docs/diagrams/robot-shop-infra.svg)
 
 ---
 
