@@ -29,15 +29,13 @@ apply: ## Apply a previously generated plan
 destroy: ## Destroy all resources in environments/prod
 	cd $(ENV_DIR) && terraform destroy
 
-destroy-targeted: ## Destroy compute/data resources, preserving Route53, ACM, and GitHub OIDC
+destroy-targeted: ## Destroy compute/data; keeps Route53, ACM, GitHub OIDC, KMS, ECR, Cognito (see README: do the pre-destroy cleanup first)
 	cd $(ENV_DIR) && terraform destroy \
 		-target=module.eks \
 		-target=module.karpenter \
 		-target=module.rds \
-		-target=module.ecr \
 		-target=module.secrets_manager \
 		-target=module.vpc \
-		-target=module.kms \
 		-auto-approve
 
 kubeconfig: ## Configure kubectl for the robot-shop EKS cluster
