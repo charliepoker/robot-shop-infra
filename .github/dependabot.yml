@@ -1,0 +1,26 @@
+# Weekly, grouped update PRs so pinned versions don't go stale.
+# Tool versions inside the workflows (tflint, Trivy, Checkov, pre-commit) are not covered;
+# they are pinned with checksums in terraform-plan.yml and bumped deliberately.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: ci
+
+  - package-ecosystem: terraform
+    directories:
+      - /environments/prod
+      - /modules/*
+    schedule:
+      interval: weekly
+    groups:
+      terraform:
+        patterns: ["*"]
+    commit-message:
+      prefix: chore(deps)

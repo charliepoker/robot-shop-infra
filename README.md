@@ -132,6 +132,7 @@ Each is a trade-off between cost, complexity and production-readiness. Where the
 - The job runs in the `prod` GitHub environment and waits for approval
 - A concurrency group prevents parallel applies against the same state
 - `terraform apply -auto-approve` only skips Terraform's prompt; the plan is **recomputed at apply time**, so the approval gate is the human checkpoint
+- Every third-party action is pinned to a commit SHA, tool downloads are checksum-verified, permissions are scoped per job, and zizmor reports no findings. Dependabot keeps the pins current.
 
 Both workflows authenticate to AWS with GitHub OIDC; no long-lived credentials are stored in GitHub.
 
@@ -258,7 +259,6 @@ Estimated monthly cost with everything running:
 - **Single NAT gateway** is a single point of failure for egress.
 - **RDS is single-AZ with 1-day backup retention** and Performance Insights disabled.
 - **The EKS API endpoint is public** (private also enabled), accepted for a portfolio project with no bastion.
-- **Pipeline hardening is incomplete.** These workflows reference GitHub Actions by version tag rather than commit SHA, and install `tflint` and Trivy at their latest release. The [app repo's pipeline](https://github.com/charliepoker/robot-shop) pins everything; bringing these workflows to the same standard is next.
 - **The pipeline's IAM roles are manual** and not yet in Terraform.
 - **Rebuild time is unmeasured.** The ~20 minute figure is `terraform apply` alone.
 

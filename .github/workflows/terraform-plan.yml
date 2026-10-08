@@ -16,14 +16,21 @@ on:
       - 'modules/**'
       - '.github/workflows/terraform-plan.yml'
 
+# Least privilege: read-only by default; each job adds only what it uses.
 permissions:
   contents: read
-  pull-requests: write   # allows the workflow to post plan output as a PR comment
-  id-token: write        # required for OIDC authentication to AWS
 
 env:
   TF_VERSION: "1.11.4"
   WORKING_DIR: environments/prod
+  # Scanner/linter versions are pinned and their downloads checksum-verified.
+  # Dependabot does not track these; bump them deliberately (version + SHA-256 together).
+  TFLINT_VERSION: "v0.64.0"
+  TFLINT_SHA256: "cca9d13e2e1d7a2c627af60ff899a3c9b74212899416aeb96ec764d2ef954537"   # tflint_linux_amd64.zip
+  TRIVY_VERSION: "0.74.0"
+  TRIVY_SHA256: "2ae6fe3ee734b7fdf11335663e18c75ea12dccc76062f09f164a3b0f8be4371a"    # trivy_0.74.0_Linux-64bit.tar.gz
+  CHECKOV_VERSION: "3.3.19"
+  PRE_COMMIT_VERSION: "4.6.2"
 
 jobs:
   pre-commit:
@@ -31,35 +38,39 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false   # no step pushes with git; don't leave the token on disk
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.12"
 
       - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
-      - name: Install pre-commit
-        run: pip install pre-commit
+      - name: Install pre-commit (pinned)
+        run: pip install "pre-commit==${PRE_COMMIT_VERSION}"
 
-      - name: Install tflint
+      - name: Install tflint (pinned, checksum-verified)
         run: |
-          curl -sLo tflint.zip \
-            https://github.com/terraform-linters/tflint/releases/latest/download/tflint_linux_amd64.zip
+          curl -sSfLo tflint.zip \
+            "https://github.com/terraform-linters/tflint/releases/download/${TFLINT_VERSION}/tflint_linux_amd64.zip"
+          echo "${TFLINT_SHA256}  tflint.zip" | sha256sum -c -
           unzip -o tflint.zip -d /usr/local/bin/
           tflint --version
 
       - name: Install tflint AWS plugin
         run: tflint --init --config=.tflint.hcl
 
-      - name: Install Trivy
+      - name: Install Trivy (pinned, checksum-verified)
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
-            | sh -s -- -b /usr/local/bin
+          curl -sSfLo trivy.tar.gz \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          echo "${TRIVY_SHA256}  trivy.tar.gz" | sha256sum -c -
+          tar -xzf trivy.tar.gz -C /usr/local/bin trivy
           trivy --version
 
       - name: Run pre-commit hooks
@@ -70,10 +81,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install checkov
-        run: pip install checkov
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false   # no step pushes with git; don't leave the token on disk
+      - name: Install checkov (pinned)
+        run: pip install "checkov==${CHECKOV_VERSION}"
 
       - name: Run checkov
         run: |
@@ -85,10 +97,13 @@ jobs:
             --soft-fail-on MEDIUM \
             --hard-fail-on HIGH,CRITICAL
 
-      - name: Install Trivy (standalone security scan)
+      - name: Install Trivy (pinned, checksum-verified)
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
-            | sh -s -- -b /usr/local/bin
+          curl -sSfLo trivy.tar.gz \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          echo "${TRIVY_SHA256}  trivy.tar.gz" | sha256sum -c -
+          tar -xzf trivy.tar.gz -C /usr/local/bin trivy
+          trivy --version
 
       - name: Run Trivy on environments/prod
         run: |
@@ -100,13 +115,18 @@ jobs:
   terraform-plan:
     name: Terraform plan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write        # OIDC authentication to AWS
+      pull-requests: write   # post the plan as a PR comment
     needs: [pre-commit, security-scan]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false   # no step pushes with git; don't leave the token on disk
       - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
@@ -116,7 +136,7 @@ jobs:
       # access to the S3 backend and the ability to call AWS APIs for
       # terraform plan (read-only describe calls).
       - name: Configure AWS credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           role-to-assume: ${{ secrets.AWS_PLAN_ROLE_ARN }}
           aws-region: us-east-1
@@ -143,7 +163,7 @@ jobs:
       # Post the plan output as a PR comment so reviewers can see what
       # will change without running Terraform locally.
       - name: Post plan to PR
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         if: github.event_name == 'pull_request'
         with:
           script: |
@@ -167,12 +187,16 @@ jobs:
   infracost:
     name: Cost estimate
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write   # post the cost estimate as a PR comment
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false   # no step pushes with git; don't leave the token on disk
       - name: Set up Infracost
-        uses: infracost/actions/setup@v3
+        uses: infracost/actions/setup@e9d6e6cd65e168e76b0de50ff9957d2fe8bb1832 # v3.0.1
         with:
           api-key: ${{ secrets.INFRACOST_API_KEY }}
 
@@ -189,7 +213,7 @@ jobs:
             --show-skipped
 
       - name: Post cost estimate to PR
-        uses: infracost/actions/comment@v3
+        uses: infracost/actions/comment@e9d6e6cd65e168e76b0de50ff9957d2fe8bb1832 # v3.0.1
         with:
           path: infracost.json
           behavior: update   # updates existing comment rather than posting a new one
