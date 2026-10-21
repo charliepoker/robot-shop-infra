@@ -15,6 +15,15 @@ on:
       - 'environments/**'
       - 'modules/**'
       - '.github/workflows/terraform-plan.yml'
+  # Also re-check main after merge, so the README badge reflects main.
+  # Still read-only: nothing here applies changes.
+  push:
+    branches:
+      - main
+    paths:
+      - 'environments/**'
+      - 'modules/**'
+      - '.github/workflows/terraform-plan.yml'
 
 # Least privilege: read-only by default; each job adds only what it uses.
 permissions:
@@ -218,6 +227,7 @@ jobs:
       # infracost/actions has no "comment" action; commenting is done by the
       # CLI that the setup action installs.
       - name: Post cost estimate to PR
+        if: github.event_name == 'pull_request'
         env:
           GITHUB_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
