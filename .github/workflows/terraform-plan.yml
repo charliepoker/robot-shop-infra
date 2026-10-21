@@ -87,15 +87,14 @@ jobs:
       - name: Install checkov (pinned)
         run: pip install "checkov==${CHECKOV_VERSION}"
 
+      # Accepted findings are skipped (with reasons) in .checkov.yaml; any
+      # other failure blocks. Severity gating needs a Prisma API key, so
+      # without one --hard-fail-on HIGH,CRITICAL would fail on everything.
       - name: Run checkov
         run: |
           checkov \
-            --directory ${{ env.WORKING_DIR }} \
-            --framework terraform \
-            --quiet \
-            --compact \
-            --soft-fail-on MEDIUM \
-            --hard-fail-on HIGH,CRITICAL
+            --config-file .checkov.yaml \
+            --directory ${{ env.WORKING_DIR }}
 
       - name: Install Trivy (pinned, checksum-verified)
         run: |
@@ -212,8 +211,16 @@ jobs:
             --out-file=infracost.json \
             --show-skipped
 
+      # infracost/actions has no "comment" action; commenting is done by the
+      # CLI that the setup action installs.
       - name: Post cost estimate to PR
-        uses: infracost/actions/comment@e9d6e6cd65e168e76b0de50ff9957d2fe8bb1832 # v3.0.1
-        with:
-          path: infracost.json
-          behavior: update   # updates existing comment rather than posting a new one
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          infracost comment github \
+            --path=infracost.json \
+            --repo="${GITHUB_REPOSITORY}" \
+            --pull-request="${PR_NUMBER}" \
+            --github-token="${GITHUB_TOKEN}" \
+            --behavior=update   # updates existing comment rather than posting a new one

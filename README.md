@@ -1,7 +1,6 @@
 # robot-shop-infra
 
-[![Terraform Plan](https://github.com/charliepoker/robot-shop-infra/actions/workflows/terraform-plan.yml/badge.svg)](https://github.com/charliepoker/robot-shop-infra/actions/workflows/terraform-plan.yml)
-[![Terraform Apply](https://github.com/charliepoker/robot-shop-infra/actions/workflows/terraform-apply.yml/badge.svg)](https://github.com/charliepoker/robot-shop-infra/actions/workflows/terraform-apply.yml)
+[![Terraform Apply](https://github.com/charliepoker/robot-shop-infra/actions/workflows/terraform-apply.yml/badge.svg?branch=main)](https://github.com/charliepoker/robot-shop-infra/actions/workflows/terraform-apply.yml?query=branch%3Amain)
 [![Terraform](https://img.shields.io/badge/terraform-%3E%3D1.11-623CE4?logo=terraform)](https://www.terraform.io/)
 [![AWS](https://img.shields.io/badge/AWS-provider%20~%3E6.0-FF9900?logo=amazonaws)](https://registry.terraform.io/providers/hashicorp/aws/latest)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)

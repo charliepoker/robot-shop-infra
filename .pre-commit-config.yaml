@@ -38,8 +38,11 @@ repos:
 
       # Security scanning — replaces the deprecated tfsec hook.
       # Scans Terraform files for misconfigurations before they reach AWS.
+      # Runs one directory at a time: parallel Trivy processes race on the
+      # shared checks-bundle cache and crash with "failed to load rego checks".
       - id: terraform_trivy
         args:
+          - --hook-config=--parallelism-limit=1
           - --args=--severity HIGH,CRITICAL
           - --args=--exit-code 1
           - --args=--ignorefile=__GIT_WORKING_DIR__/.trivyignore

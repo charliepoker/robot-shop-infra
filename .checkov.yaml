@@ -1,0 +1,50 @@
+# Checkov config for the Terraform Plan workflow.
+#
+# Without a Prisma Cloud API key Checkov assigns no severities, so
+# severity-based gating (--hard-fail-on HIGH,CRITICAL) cannot work: every
+# failure is a hard failure. Instead, each accepted finding is skipped here
+# with its reason, and any NEW failure blocks the PR.
+#
+# Revisit this list when the underlying design changes.
+framework:
+  - terraform
+compact: true
+quiet: true
+skip-check:
+  # ── False positives ───────────────────────────────────────────────────────
+  # ECR uses IMMUTABLE_WITH_EXCLUSION (only cosign sha256-* tags are mutable);
+  # Checkov only recognises plain IMMUTABLE.
+  - CKV_AWS_51
+  # KMS key policies must use Resource "*" (it means "this key"), and the
+  # root-account kms:* statement is required to keep the key manageable.
+  - CKV_AWS_109
+  - CKV_AWS_111
+  - CKV_AWS_356
+  # Both SGs are attached — to the RDS instance and the VPC endpoints inside
+  # the upstream modules, which Checkov cannot follow.
+  - CKV2_AWS_5
+
+  # ── Documented exceptions ─────────────────────────────────────────────────
+  # Route53 List* APIs and EC2 snapshot APIs don't support resource-level
+  # scoping; write actions are scoped (see external-dns and velero modules).
+  - CKV_AWS_355
+  - CKV_AWS_290
+  # Registry modules are pinned by version constraint, not commit hash.
+  - CKV_TF_1
+  # ECR repos are encrypted with AES256 (AWS-managed); a CMK isn't required.
+  - CKV_AWS_136
+  # Single wildcard cert covers all ingress hosts by design.
+  - CKV2_AWS_71
+  # App/observability secrets are static credentials with no rotation Lambda.
+  - CKV2_AWS_57
+  # AZ list is consumed via slice() of a fixed count, so new AZs don't
+  # change the result.
+  - CKV_AWS_394
+  # Route53: DNSSEC and query logging not enabled for this zone.
+  - CKV2_AWS_38
+  - CKV2_AWS_39
+  # Velero backup bucket: single-region, no access logging or event
+  # notifications needed for a backup target.
+  - CKV_AWS_18
+  - CKV_AWS_144
+  - CKV2_AWS_62
