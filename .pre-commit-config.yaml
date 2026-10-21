@@ -25,9 +25,14 @@ repos:
 
       # Validates Terraform syntax and internal consistency.
       # --backend=false avoids needing S3 credentials locally.
+      # -lockfile=readonly: lock files are generated on macOS, so init on the
+      # Linux runner would add its own h1: hash and pre-commit fails on the
+      # modified files. Downloads are still verified against the zh: hashes,
+      # and a stale lock file still fails instead of being silently rewritten.
       - id: terraform_validate
         args:
           - --tf-init-args=-backend=false
+          - --tf-init-args=-lockfile=readonly
 
       # Lints for provider-specific issues tflint knows about:
       # invalid instance types, deprecated arguments, missing variables.
