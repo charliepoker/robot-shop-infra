@@ -62,7 +62,11 @@ jobs:
           unzip -o tflint.zip -d /usr/local/bin/
           tflint --version
 
+      # Authenticated so the plugin download isn't subject to the shared
+      # runner IP's unauthenticated GitHub API rate limit (60 req/hr).
       - name: Install tflint AWS plugin
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: tflint --init --config=.tflint.hcl
 
       - name: Install Trivy (pinned, checksum-verified)
